@@ -16,9 +16,9 @@ Interfaz Intuitiva: Diseño oscuro moderno y minimalista para evitar distraccion
 
 Facil  de usar  Doble clic  usar java 23  o jdk 
 
-[](cap/1.png)
-[](cap/2.png)
-[](cap/3.png)
-[](cap/4.png)
-[](cap/5.png)
+![](cap/1.png)
+![](cap/2.png)
+![](cap/3.png)
+![](cap/4.png)
+![](cap/5.png)
 
