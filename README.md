@@ -16,6 +16,7 @@ Intuitive Interface: Modern dark design, minimalist and distraction-free.
 
 Easy to Use: Just double-click. Requires Java 23 or JDK.
 
+------------------------------------------------------------------------------
 
 War Era Launcher es una herramienta de escritorio diseñada exclusivamente para la comunidad de War Era Venezuela. 
 Creado por YisusBOficial, este launcher facilita el acceso al juego, simuladores y herramientas económicas, optimizando la experiencia para los estrategas venezolanos.
@@ -41,9 +42,6 @@ Facil  de usar  Doble clic  usar java 23  o jdk
 ![](cap/4.png)
 ![](cap/5.png)
 
-Aquí tienes la traducción de esa parte tan importante. Captura muy bien ese sentimiento de comunidad y el esfuerzo que le pusiste durante todo el mes de trabajo:
-
-English Version:
 This was created to make everything easier for players, keeping everything within reach. There’s no need to open a browser and search for URLs—everything is just one click away.
 
 I AM NOT LOOKING FOR CREDIT FOR THIS LAUNCHER.
@@ -51,6 +49,7 @@ As a member of this community, I saw that new players and novices needed a tool 
 
 I hope you enjoy it. I’ve given my absolute best to this project over the past month.
 
+------------------------------------------------------------------------------------------------------------------------------
 
 Esto es creado  para facilitar a los jugadores a tener todo a la mano
 sin necesidad de abrir y buscar las URL todo solo dale clic
