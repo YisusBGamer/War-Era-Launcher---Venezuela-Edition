@@ -3,9 +3,11 @@ import java.awt.event.*;
 import java.io.*;
 import java.net.URI;
 import java.nio.file.*;
+import java.util.Properties;
 import java.util.Timer;
 import java.util.TimerTask;
 import javax.swing.*;
+import javax.swing.border.Border;
 
 public class Main {
     
@@ -14,6 +16,9 @@ public class Main {
     private static final String CACHE_DIR = "cache_data";
     private static final String LAST_CACHE_CLEAR_FILE = "last_cache_clear.txt";
     private static final long REFRESH_INTERVAL_MS = 30 * 60 * 1000; // 30 minutes
+    
+    // Configuration file
+    private static final String CONFIG_FILE = "config.properties";
 
     private static final String CHROME_PATH_WIN = "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe";
     private static final String EDGE_PATH_WIN = "C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe";
@@ -51,12 +56,38 @@ public class Main {
     private JPanel quickLinks;
     private JButton btnPlay, btnYisus, btnEconomia, btnSimulador, btnDiscord;
     
-    // Dark theme colors
-    private Color bgDark = new Color(20, 20, 20);
-    private Color bgLight = new Color(40, 40, 40);
-    private Color accent = new Color(0, 120, 215);
-    private Color fgLight = new Color(220, 220, 220);
-    private Color fgMuted = new Color(120, 120, 120);
+    // Theme colors - Mejorado con soporte para temas claro/oscuro
+    private String currentTheme = "dark";
+    
+    private Color bgDark, bgLight, bgPanel, accent, accentHover, accentDark, fgLight, fgMuted, success, warning;
+    
+    private void initTheme() {
+        if (currentTheme.equals("light")) {
+            // Light theme colors
+            bgDark = new Color(245, 245, 250);
+            bgLight = new Color(255, 255, 255);
+            bgPanel = new Color(240, 240, 245);
+            accent = new Color(0, 100, 200);
+            accentHover = new Color(0, 120, 220);
+            accentDark = new Color(0, 80, 160);
+            fgLight = new Color(30, 30, 35);
+            fgMuted = new Color(100, 100, 110);
+            success = new Color(30, 160, 80);
+            warning = new Color(230, 160, 40);
+        } else {
+            // Dark theme colors
+            bgDark = new Color(15, 15, 20);
+            bgLight = new Color(35, 35, 45);
+            bgPanel = new Color(25, 25, 35);
+            accent = new Color(0, 150, 255);
+            accentHover = new Color(30, 170, 255);
+            accentDark = new Color(0, 100, 180);
+            fgLight = new Color(235, 235, 240);
+            fgMuted = new Color(140, 140, 150);
+            success = new Color(40, 200, 100);
+            warning = new Color(255, 180, 50);
+        }
+    }
     
     public static void main(String[] args) {
         // Check Java version
@@ -178,6 +209,10 @@ public class Main {
     }
     
     private void init() {
+        // Cargar configuración guardada
+        loadConfig();
+        initTheme(); // Inicializar tema
+        
         // Main frame
         frame = new JFrame("War Era Launcher");
         frame.setSize(1000, 550);
@@ -190,10 +225,8 @@ public class Main {
         menuBar.setBackground(bgLight);
         menuBar.setBorderPainted(false);
         
-        // Language menu
+// Language menu
         JMenu langMenu = new JMenu("🌐 Idioma");
-        langMenu.setForeground(fgLight);
-        langMenu.setFont(new Font("Segoe UI", Font.PLAIN, 12));
         
         JMenuItem itemEs = new JMenuItem("Español");
         itemEs.setFont(new Font("Segoe UI", Font.PLAIN, 12));
@@ -213,7 +246,24 @@ public class Main {
         langMenu.add(itemPt);
         langMenu.add(itemFr);
         
+        // Theme menu
+        JMenu themeMenu = new JMenu("🎨 Tema");
+        themeMenu.setForeground(fgLight);
+        themeMenu.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+        
+        JMenuItem darkTheme = new JMenuItem("🌙 Oscuro");
+        darkTheme.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+        darkTheme.addActionListener(e -> changeTheme("dark"));
+        
+        JMenuItem lightTheme = new JMenuItem("☀ Claro");
+        lightTheme.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+        lightTheme.addActionListener(e -> changeTheme("light"));
+        
+        themeMenu.add(darkTheme);
+        themeMenu.add(lightTheme);
+        
         menuBar.add(langMenu);
+        menuBar.add(themeMenu);
         frame.setJMenuBar(menuBar);
         
         // Main panel with grid layout - Left (info) and Right (buttons)
@@ -260,30 +310,21 @@ public class Main {
         JButton btnWindows = new JButton(t("osWindows"));
         JButton btnLinux = new JButton(t("osLinux"));
         
-        btnWindows.setFont(new Font("Segoe UI", Font.PLAIN, 11));
-        btnWindows.setForeground(fgLight);
-        btnWindows.setBackground(useLinuxMode ? bgLight : accent);
-        btnWindows.setOpaque(true);
-        btnWindows.setBorderPainted(false);
-        btnWindows.setFocusPainted(false);
-        btnWindows.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        styleOSButton(btnWindows, !useLinuxMode);
+        styleOSButton(btnLinux, useLinuxMode);
+        
         btnWindows.addActionListener(e -> {
             useLinuxMode = false;
-            btnWindows.setBackground(accent);
-            btnLinux.setBackground(bgLight);
+            styleOSButton(btnWindows, true);
+            styleOSButton(btnLinux, false);
+            saveConfig(); // Guardar configuración
         });
         
-        btnLinux.setFont(new Font("Segoe UI", Font.PLAIN, 11));
-        btnLinux.setForeground(fgLight);
-        btnLinux.setBackground(useLinuxMode ? accent : bgLight);
-        btnLinux.setOpaque(true);
-        btnLinux.setBorderPainted(false);
-        btnLinux.setFocusPainted(false);
-        btnLinux.setCursor(new Cursor(Cursor.HAND_CURSOR));
         btnLinux.addActionListener(e -> {
             useLinuxMode = true;
-            btnLinux.setBackground(accent);
-            btnWindows.setBackground(bgLight);
+            styleOSButton(btnLinux, true);
+            styleOSButton(btnWindows, false);
+            saveConfig(); // Guardar configuración
         });
         
         osPanel.add(btnWindows);
@@ -408,27 +449,141 @@ public class Main {
         updateLabels();
         frame.setTitle("War Era Launcher");
         frame.repaint();
+        saveConfig(); // Guardar configuración
+    }
+    
+    private void changeTheme(String theme) {
+        currentTheme = theme;
+        initTheme(); // Aplicar colores del tema
+        applyTheme(); // Actualizar interfaz
+        saveConfig(); // Guardar configuración
+    }
+    
+    private void applyTheme() {
+        // Actualizar colores del frame y paneles
+        frame.getContentPane().setBackground(bgDark);
+        
+        // Actualizar labels
+        titleLabel.setForeground(accent);
+        subLabel.setForeground(fgMuted);
+        browserLabel.setForeground(fgLight);
+        
+        // Actualizar botones existentes
+        for (Component comp : frame.getContentPane().getComponents()) {
+            updateComponentTheme(comp);
+        }
+        
+        frame.repaint();
+    }
+    
+    private void updateComponentTheme(Component comp) {
+        if (comp instanceof JPanel) {
+            JPanel panel = (JPanel) comp;
+            panel.setBackground(bgDark);
+            for (Component c : panel.getComponents()) {
+                updateComponentTheme(c);
+            }
+        } else if (comp instanceof JButton) {
+            JButton btn = (JButton) comp;
+            btn.setForeground(fgLight);
+            btn.setBackground(bgPanel);
+        } else if (comp instanceof JLabel) {
+            JLabel lbl = (JLabel) comp;
+            lbl.setForeground(fgLight);
+        }
+    }
+    
+    // Cargar configuración desde archivo
+    private void loadConfig() {
+        Properties props = new Properties();
+        try {
+            File configFile = new File(CONFIG_FILE);
+            if (configFile.exists()) {
+                FileInputStream fis = new FileInputStream(configFile);
+                props.load(fis);
+                fis.close();
+                
+                // Cargar idioma
+                String lang = props.getProperty("language");
+                if (lang != null && translations.containsKey(lang)) {
+                    currentLanguage = lang;
+                }
+                
+                // Cargar navegador
+                String browser = props.getProperty("browser");
+                if (browser != null) {
+                    selectedBrowser = browser;
+                }
+                
+                // Cargar modo Linux
+                String linuxMode = props.getProperty("linuxMode");
+                if (linuxMode != null) {
+                    useLinuxMode = Boolean.parseBoolean(linuxMode);
+                }
+                
+                // Cargar tema
+                String theme = props.getProperty("theme");
+                if (theme != null && (theme.equals("dark") || theme.equals("light"))) {
+                    currentTheme = theme;
+                }
+                
+                System.out.println("Configuración cargada: idioma=" + currentLanguage + ", navigateur=" + selectedBrowser + ", linuxMode=" + useLinuxMode + ", theme=" + currentTheme);
+            }
+        } catch (Exception e) {
+            System.out.println("Error al cargar configuración: " + e.getMessage());
+        }
+    }
+    
+    // Guardar configuración en archivo
+    private void saveConfig() {
+        Properties props = new Properties();
+        props.setProperty("language", currentLanguage);
+        props.setProperty("browser", selectedBrowser);
+        props.setProperty("linuxMode", String.valueOf(useLinuxMode));
+        props.setProperty("theme", currentTheme);
+        props.setProperty("lastUpdate", String.valueOf(System.currentTimeMillis()));
+        
+        try {
+            FileOutputStream fos = new FileOutputStream(CONFIG_FILE);
+            props.store(fos, "War Era Launcher Configuration");
+            fos.close();
+            System.out.println("Configuración guardada: idioma=" + currentLanguage + ", navigateur=" + selectedBrowser + ", theme=" + currentTheme);
+        } catch (Exception e) {
+            System.out.println("Error al guardar configuración: " + e.getMessage());
+        }
     }
     
     private JButton createQuickButton(String buttonName, String url) {
         JButton btn = new JButton(buttonName);
         btn.setFont(new Font("Segoe UI", Font.BOLD, 14));
         btn.setForeground(fgLight);
-        btn.setBackground(bgLight);
+        btn.setBackground(bgPanel);
         btn.setOpaque(true);
         btn.setBorderPainted(false);
         btn.setFocusPainted(false);
         btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        btn.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createLineBorder(new Color(60, 60, 80), 1),
+            BorderFactory.createEmptyBorder(12, 20, 12, 20)
+        ));
         btn.addActionListener(e -> {
             openURL(url);
         });
         
         btn.addMouseListener(new MouseAdapter() {
             public void mouseEntered(MouseEvent e) {
-                btn.setBackground(accent);
+                btn.setBackground(accentDark);
+                btn.setBorder(BorderFactory.createCompoundBorder(
+                    BorderFactory.createLineBorder(accentHover, 1),
+                    BorderFactory.createEmptyBorder(12, 20, 12, 20)
+                ));
             }
             public void mouseExited(MouseEvent e) {
-                btn.setBackground(bgLight);
+                btn.setBackground(bgPanel);
+                btn.setBorder(BorderFactory.createCompoundBorder(
+                    BorderFactory.createLineBorder(new Color(60, 60, 80), 1),
+                    BorderFactory.createEmptyBorder(12, 20, 12, 20)
+                ));
             }
         });
         
@@ -439,29 +594,48 @@ public class Main {
         JButton btn = new JButton(browserName);
         btn.setFont(new Font("Segoe UI", Font.PLAIN, 11));
         btn.setForeground(fgLight);
-        btn.setBackground(bgLight);
+        btn.setBackground(bgPanel);
         btn.setOpaque(true);
         btn.setBorderPainted(false);
         btn.setFocusPainted(false);
         btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        btn.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createLineBorder(new Color(55, 55, 75), 1),
+            BorderFactory.createEmptyBorder(8, 12, 8, 12)
+        ));
         
         if (selectedBrowser.equals(browserKey)) {
-            btn.setBackground(accent);
+            btn.setBackground(accentDark);
         }
         
         btn.addActionListener(e -> {
             selectedBrowser = browserKey;
             updateBrowserButtons(btnChrome, btnEdge, btnFirefox, btnOpera, btnSafari, btnBrave);
             System.out.println("Navegador seleccionado: " + browserName);
+            saveConfig(); // Guardar configuración
         });
         
         btn.addMouseListener(new MouseAdapter() {
             public void mouseEntered(MouseEvent e) {
-                btn.setBackground(accent);
+                btn.setBackground(accentDark);
+                btn.setBorder(BorderFactory.createCompoundBorder(
+                    BorderFactory.createLineBorder(accentHover, 1),
+                    BorderFactory.createEmptyBorder(8, 12, 8, 12)
+                ));
             }
             public void mouseExited(MouseEvent e) {
-                if (!selectedBrowser.equals(browserKey)) {
-                    btn.setBackground(bgLight);
+                if (selectedBrowser.equals(browserKey)) {
+                    btn.setBackground(accentDark);
+                    btn.setBorder(BorderFactory.createCompoundBorder(
+                        BorderFactory.createLineBorder(accent, 1),
+                        BorderFactory.createEmptyBorder(8, 12, 8, 12)
+                    ));
+                } else {
+                    btn.setBackground(bgPanel);
+                    btn.setBorder(BorderFactory.createCompoundBorder(
+                        BorderFactory.createLineBorder(new Color(55, 55, 75), 1),
+                        BorderFactory.createEmptyBorder(8, 12, 8, 12)
+                    ));
                 }
             }
         });
@@ -470,12 +644,39 @@ public class Main {
     }
     
     private void updateBrowserButtons(JButton chrome, JButton edge, JButton firefox, JButton opera, JButton safari, JButton brave) {
-        chrome.setBackground(selectedBrowser.equals("chrome") ? accent : bgLight);
-        edge.setBackground(selectedBrowser.equals("edge") ? accent : bgLight);
-        firefox.setBackground(selectedBrowser.equals("firefox") ? accent : bgLight);
-        opera.setBackground(selectedBrowser.equals("opera") ? accent : bgLight);
-        safari.setBackground(selectedBrowser.equals("safari") ? accent : bgLight);
-        brave.setBackground(selectedBrowser.equals("brave") ? accent : bgLight);
+        styleBrowserButton(chrome, "chrome");
+        styleBrowserButton(edge, "edge");
+        styleBrowserButton(firefox, "firefox");
+        styleBrowserButton(opera, "opera");
+        styleBrowserButton(safari, "safari");
+        styleBrowserButton(brave, "brave");
+    }
+    
+    private void styleOSButton(JButton btn, boolean selected) {
+        btn.setFont(new Font("Segoe UI", Font.PLAIN, 11));
+        btn.setForeground(fgLight);
+        btn.setOpaque(true);
+        btn.setBorderPainted(false);
+        btn.setFocusPainted(false);
+        btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        btn.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createLineBorder(selected ? accent : new Color(55, 55, 75), 1),
+            BorderFactory.createEmptyBorder(8, 15, 8, 15)
+        ));
+        if (selected) {
+            btn.setBackground(accentDark);
+        } else {
+            btn.setBackground(bgPanel);
+        }
+    }
+    
+    private void styleBrowserButton(JButton btn, String browserKey) {
+        boolean selected = selectedBrowser.equals(browserKey);
+        btn.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createLineBorder(selected ? accentHover : new Color(55, 55, 75), 1),
+            BorderFactory.createEmptyBorder(8, 12, 8, 12)
+        ));
+        btn.setBackground(selected ? accentDark : bgPanel);
     }
     
     private JButton createLangButton(String langName, String langCode) {
